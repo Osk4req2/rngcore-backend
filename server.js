@@ -8,11 +8,24 @@ let purchases = [];
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
+    }
+
+    next();
+});
+
 app.get("/", (req, res) => {
     res.send("RNGCORE BACKEND DZIALA");
 });
 
 app.get("/test", (req, res) => {
+
     const nick = req.query.nick || "Nieznany";
     const amount = Number(req.query.amount || 0);
 
@@ -26,10 +39,13 @@ app.get("/test", (req, res) => {
 
     console.log("TESTOWY ZAKUP:", nick, amount);
 
-    res.json({ success: true });
+    res.json({
+        success: true
+    });
 });
 
 app.post("/claim", (req, res) => {
+
     const nick = String(req.body.nick || "").trim();
     const amount = Number(req.body.amount || 0);
     const code = String(req.body.code || "").trim();
@@ -51,21 +67,32 @@ app.post("/claim", (req, res) => {
 
     console.log("ODEBRANIE vPLN:", nick, amount, code);
 
-    res.json({ success: true });
+    res.json({
+        success: true
+    });
 });
 
 app.get("/api/purchases", (req, res) => {
-    res.json(purchases.filter(p => !p.done));
+
+    res.json(
+        purchases.filter(p => !p.done)
+    );
 });
 
 app.post("/api/purchases/:id/done", (req, res) => {
-    const purchase = purchases.find(p => p.id === req.params.id);
+
+    const purchase =
+        purchases.find(
+            p => p.id === req.params.id
+        );
 
     if (purchase) {
         purchase.done = true;
     }
 
-    res.json({ success: true });
+    res.json({
+        success: true
+    });
 });
 
 app.listen(PORT, () => {
