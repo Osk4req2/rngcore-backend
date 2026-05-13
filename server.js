@@ -1,44 +1,24 @@
 const express = require("express");
-const fs = require("fs");
 
 const app = express();
 
-app.use(express.json());
-
 const PORT = process.env.PORT || 3000;
-const SECRET = "rngcore-secret";
 
-const purchasesFile = "./purchases.json";
-
-if (!fs.existsSync(purchasesFile)) {
-    fs.writeFileSync(purchasesFile, JSON.stringify([]));
-}
+let purchases = [];
 
 app.get("/", (req, res) => {
     res.send("RNGCORE BACKEND DZIALA");
 });
 
-app.post("/webhook/tipply", (req, res) => {
+/*
+TESTOWY DONATE:
+https://twojbackend.up.railway.app/test?nick=Osk4req&amount=50
+*/
 
-    if (req.query.secret !== SECRET) {
-        return res.status(403).json({
-            error: "Brak dostepu"
-        });
-    }
+app.get("/test", (req, res) => {
 
-    const data = req.body;
-
-    const nick =
-        data.nick ||
-        data.username ||
-        data.message ||
-        "Nieznany";
-
-    const amount =
-        Number(data.amount || data.value || 0);
-
-    const purchases =
-        JSON.parse(fs.readFileSync(purchasesFile));
+    const nick = req.query.nick || "Nieznany";
+    const amount = Number(req.query.amount || 0);
 
     purchases.push({
         id: Date.now().toString(),
@@ -47,12 +27,7 @@ app.post("/webhook/tipply", (req, res) => {
         done: false
     });
 
-    fs.writeFileSync(
-        purchasesFile,
-        JSON.stringify(purchases, null, 2)
-    );
-
-    console.log("NOWA PLATNOSC:", nick, amount);
+    console.log("NOWY ZAKUP:", nick, amount);
 
     res.json({
         success: true
@@ -60,19 +35,12 @@ app.post("/webhook/tipply", (req, res) => {
 });
 
 app.get("/api/purchases", (req, res) => {
-
-    const purchases =
-        JSON.parse(fs.readFileSync(purchasesFile));
-
     res.json(
         purchases.filter(p => !p.done)
     );
 });
 
 app.post("/api/purchases/:id/done", (req, res) => {
-
-    const purchases =
-        JSON.parse(fs.readFileSync(purchasesFile));
 
     const purchase =
         purchases.find(
@@ -82,11 +50,6 @@ app.post("/api/purchases/:id/done", (req, res) => {
     if (purchase) {
         purchase.done = true;
     }
-
-    fs.writeFileSync(
-        purchasesFile,
-        JSON.stringify(purchases, null, 2)
-    );
 
     res.json({
         success: true
