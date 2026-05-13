@@ -6,17 +6,13 @@ const PORT = process.env.PORT || 3000;
 
 let purchases = [];
 
+app.use(express.json());
+
 app.get("/", (req, res) => {
     res.send("RNGCORE BACKEND DZIALA");
 });
 
-/*
-TESTOWY DONATE:
-https://twojbackend.up.railway.app/test?nick=Osk4req&amount=50
-*/
-
 app.get("/test", (req, res) => {
-
     const nick = req.query.nick || "Nieznany";
     const amount = Number(req.query.amount || 0);
 
@@ -24,36 +20,52 @@ app.get("/test", (req, res) => {
         id: Date.now().toString(),
         nick,
         amount,
+        code: "TEST",
         done: false
     });
 
-    console.log("NOWY ZAKUP:", nick, amount);
+    console.log("TESTOWY ZAKUP:", nick, amount);
 
-    res.json({
-        success: true
+    res.json({ success: true });
+});
+
+app.post("/claim", (req, res) => {
+    const nick = String(req.body.nick || "").trim();
+    const amount = Number(req.body.amount || 0);
+    const code = String(req.body.code || "").trim();
+
+    if (!nick || amount <= 0 || !code) {
+        return res.json({
+            success: false,
+            error: "Wpisz nick, kwotę i wiadomość/ID donate."
+        });
+    }
+
+    purchases.push({
+        id: Date.now().toString(),
+        nick,
+        amount,
+        code,
+        done: false
     });
+
+    console.log("ODEBRANIE vPLN:", nick, amount, code);
+
+    res.json({ success: true });
 });
 
 app.get("/api/purchases", (req, res) => {
-    res.json(
-        purchases.filter(p => !p.done)
-    );
+    res.json(purchases.filter(p => !p.done));
 });
 
 app.post("/api/purchases/:id/done", (req, res) => {
-
-    const purchase =
-        purchases.find(
-            p => p.id === req.params.id
-        );
+    const purchase = purchases.find(p => p.id === req.params.id);
 
     if (purchase) {
         purchase.done = true;
     }
 
-    res.json({
-        success: true
-    });
+    res.json({ success: true });
 });
 
 app.listen(PORT, () => {
